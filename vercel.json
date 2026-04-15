@@ -7,7 +7,7 @@
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/*.ts": {
+    "api/claude.ts": {
       "maxDuration": 60
     }
   }

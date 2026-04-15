@@ -14,6 +14,8 @@ import { renderPatternsBlock, selectPatternsForInjection } from './learningSyste
 export interface AssembledPrompt {
   system: string;
   prompt_version: string;
+  /** Non-fatal warnings from pattern selection (e.g., budget exceeded). */
+  warnings: string[];
 }
 
 function voiceBlock(profile: UserProfile | null): string {
@@ -30,10 +32,16 @@ function visualBlock(profile: UserProfile | null): string {
   return VISUAL_GUIDE;
 }
 
-function patternsBlock(profile: UserProfile | null): string {
+function patternsSelection(profile: UserProfile | null): {
+  block: string;
+  warnings: string[];
+} {
   const patterns: LearnedPattern[] = profile?.learned_patterns ?? [];
-  const selected = selectPatternsForInjection(patterns);
-  return renderPatternsBlock(selected);
+  const selection = selectPatternsForInjection(patterns);
+  return {
+    block: renderPatternsBlock(selection.patterns),
+    warnings: selection.warnings,
+  };
 }
 
 function metadataBlock(metadata: ProjectMetadata): string {
@@ -48,9 +56,9 @@ function metadataBlock(metadata: ProjectMetadata): string {
   return ['## Article Metadata', ...lines].join('\n');
 }
 
-function assemble(parts: string[]): AssembledPrompt {
+function assemble(parts: string[], warnings: string[] = []): AssembledPrompt {
   const system = parts.filter((p) => p.trim().length > 0).join('\n\n');
-  return { system, prompt_version: promptVersion(system) };
+  return { system, prompt_version: promptVersion(system), warnings };
 }
 
 // ---------- Stage 2: First Draft ----------
@@ -67,13 +75,17 @@ export function assembleFirstDraftPrompt(args: {
     'Output plain markdown. Do not wrap your response in code fences or commentary.',
   ].join('\n');
 
-  return assemble([
-    instructions,
-    '# Voice Guide',
-    voiceBlock(args.profile),
-    patternsBlock(args.profile),
-    metadataBlock(args.metadata),
-  ]);
+  const pats = patternsSelection(args.profile);
+  return assemble(
+    [
+      instructions,
+      '# Voice Guide',
+      voiceBlock(args.profile),
+      pats.block,
+      metadataBlock(args.metadata),
+    ],
+    pats.warnings,
+  );
 }
 
 // ---------- Stage 3: Inline revision ----------
@@ -90,13 +102,17 @@ export function assembleSectionRevisionPrompt(args: {
     'Stay in the voice described below and honour every "Red Flag".',
   ].join('\n');
 
-  return assemble([
-    instructions,
-    '# Voice Guide',
-    voiceBlock(args.profile),
-    patternsBlock(args.profile),
-    metadataBlock(args.metadata),
-  ]);
+  const pats = patternsSelection(args.profile);
+  return assemble(
+    [
+      instructions,
+      '# Voice Guide',
+      voiceBlock(args.profile),
+      pats.block,
+      metadataBlock(args.metadata),
+    ],
+    pats.warnings,
+  );
 }
 
 export function assembleFullRevisionPrompt(args: {
@@ -109,13 +125,17 @@ export function assembleFullRevisionPrompt(args: {
     'Return the full revised article as markdown. No code fences, no commentary.',
     'Preserve what is working; only change what the feedback targets.',
   ].join('\n');
-  return assemble([
-    instructions,
-    '# Voice Guide',
-    voiceBlock(args.profile),
-    patternsBlock(args.profile),
-    metadataBlock(args.metadata),
-  ]);
+  const pats = patternsSelection(args.profile);
+  return assemble(
+    [
+      instructions,
+      '# Voice Guide',
+      voiceBlock(args.profile),
+      pats.block,
+      metadataBlock(args.metadata),
+    ],
+    pats.warnings,
+  );
 }
 
 // ---------- Stage 4: Diff / learning ----------
@@ -167,13 +187,17 @@ export function assembleLinkedInPrompt(args: {
     'Strategies: "hook" (provocative opener), "story" (personal anecdote opener), "hot_take" (contrarian opener).',
     'Return a JSON array of { "strategy": "hook"|"story"|"hot_take", "body": string }. JSON only.',
   ].join('\n');
-  return assemble([
-    instructions,
-    '# Voice Guide',
-    voiceBlock(args.profile),
-    patternsBlock(args.profile),
-    metadataBlock(args.metadata),
-  ]);
+  const pats = patternsSelection(args.profile);
+  return assemble(
+    [
+      instructions,
+      '# Voice Guide',
+      voiceBlock(args.profile),
+      pats.block,
+      metadataBlock(args.metadata),
+    ],
+    pats.warnings,
+  );
 }
 
 // ---------- Stage 7: Instagram carousel ----------

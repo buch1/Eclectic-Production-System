@@ -28,6 +28,13 @@ export interface StorageProvider {
 
   /** Clear an entire namespace. Useful for tests and the reset-profile flow. */
   clearNamespace(namespace: string): Promise<void>;
+
+  /**
+   * Estimate total bytes used across all namespaces the provider owns.
+   * Optional — backends without a cheap way to compute this can return
+   * null, in which case the UI hides the storage-usage indicator.
+   */
+  estimateUsageBytes?(): Promise<number | null>;
 }
 
 export const NAMESPACES = {

@@ -66,4 +66,21 @@ export class LocalStorageProvider implements StorageProvider {
     }
     for (const k of toRemove) localStorage.removeItem(k);
   }
+
+  /**
+   * Estimate total bytes used across every EPS namespace. localStorage stores
+   * strings as UTF-16, so each char contributes 2 bytes. The sum is an upper
+   * bound — good enough for triggering a "running low" warning.
+   */
+  async estimateUsageBytes(): Promise<number> {
+    let chars = 0;
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k === null) continue;
+      if (!k.startsWith(`${KEY_PREFIX}:`)) continue;
+      const v = localStorage.getItem(k);
+      chars += k.length + (v?.length ?? 0);
+    }
+    return chars * 2;
+  }
 }

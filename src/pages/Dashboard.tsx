@@ -9,15 +9,18 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { projectRepo } from '@/lib/storage/repositories';
 import { createProject, stageLabel } from '@/lib/projects';
+import { formatBytes, getStorageUsage, type StorageUsage } from '@/lib/storage/usage';
 import type { Project } from '@/types';
 import { Layout } from '@/components/Layout';
 
 export function Dashboard() {
   const [projects, setProjects] = useState<Project[] | null>(null);
+  const [usage, setUsage] = useState<StorageUsage | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     void projectRepo.list().then(setProjects);
+    void getStorageUsage().then(setUsage);
   }, []);
 
   async function handleNew() {
@@ -38,6 +41,16 @@ export function Dashboard() {
           New article
         </button>
       </div>
+
+      {usage?.shouldWarn && usage.bytes !== null && usage.pct !== null && (
+        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-medium">Local storage is filling up</p>
+          <p className="mt-1">
+            Using {formatBytes(usage.bytes)} ({usage.pct}% of the ~5 MB browser limit). Delete old
+            projects or export versions before saves start failing.
+          </p>
+        </div>
+      )}
 
       {projects === null ? (
         <p className="text-sm text-neutral-500">Loading…</p>
