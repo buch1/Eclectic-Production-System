@@ -10,3 +10,63 @@
 body {
   margin: 0;
 }
+
+/* TipTap document styling — a lightweight stand-in for @tailwindcss/typography. */
+.tiptap-doc h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.4em 0 0.5em;
+}
+.tiptap-doc h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.2em 0 0.4em;
+}
+.tiptap-doc h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1em 0 0.3em;
+}
+.tiptap-doc p {
+  margin: 0.6em 0;
+}
+.tiptap-doc ul,
+.tiptap-doc ol {
+  margin: 0.6em 0 0.6em 1.2em;
+}
+.tiptap-doc ul {
+  list-style: disc;
+}
+.tiptap-doc ol {
+  list-style: decimal;
+}
+.tiptap-doc li > p {
+  margin: 0.15em 0;
+}
+.tiptap-doc code {
+  background: #f4f4f5;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+}
+.tiptap-doc pre {
+  background: #0a0a0a;
+  color: #f4f4f5;
+  padding: 0.8em 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+.tiptap-doc pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.tiptap-doc p.is-editor-empty:first-child::before {
+  color: #a1a1aa;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
