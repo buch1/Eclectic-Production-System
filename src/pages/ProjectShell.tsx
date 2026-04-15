@@ -2,9 +2,15 @@
  * ProjectShell loads a project by id and renders the current stage via an
  * outlet. Stage components consume the project from useOutletContext.
  *
- * Scaffold note: the actual stage implementations land in follow-up commits.
+ * Contract for setProject:
+ *   - The updater is called against the latest known project (read from a
+ *     ref, not a stale closure).
+ *   - The updated project is persisted to storage BEFORE the promise
+ *     resolves and BEFORE the re-render. Stages can safely `await setProject`
+ *     and then navigate, knowing the next route will read the fresh state.
+ *   - `last_saved_at` is stamped automatically on every update.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useParams } from 'react-router-dom';
 import { projectRepo } from '@/lib/storage/repositories';
 import type { Project } from '@/types';
@@ -15,9 +21,13 @@ export interface ProjectContext {
   setProject: (updater: (prev: Project) => Project) => Promise<void>;
 }
 
+type LoadState = Project | null | 'missing';
+
 export function ProjectShell() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [project, setProjectState] = useState<Project | null | 'missing'>(null);
+  const [project, setProjectState] = useState<LoadState>(null);
+  const projectRef = useRef<LoadState>(null);
+  projectRef.current = project;
 
   useEffect(() => {
     if (!projectId) return;
@@ -26,14 +36,17 @@ export function ProjectShell() {
     });
   }, [projectId]);
 
-  const setProject: ProjectContext['setProject'] = async (updater) => {
-    setProjectState((prev) => {
-      if (prev === null || prev === 'missing') return prev;
-      const next: Project = { ...updater(prev), last_saved_at: new Date().toISOString() };
-      void projectRepo.save(next);
-      return next;
-    });
-  };
+  const setProject = useCallback<ProjectContext['setProject']>(async (updater) => {
+    const current = projectRef.current;
+    if (current === null || current === 'missing') return;
+    const next: Project = {
+      ...updater(current),
+      last_saved_at: new Date().toISOString(),
+    };
+    await projectRepo.save(next);
+    projectRef.current = next;
+    setProjectState(next);
+  }, []);
 
   if (project === null) {
     return (
