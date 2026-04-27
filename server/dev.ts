@@ -4,6 +4,7 @@
  *
  * Vite (port 5173) proxies /api/* to this server (port 5174).
  */
+import 'dotenv/config';
 import express from 'express';
 import { handleProxyRequest } from '../api/_handler';
 
